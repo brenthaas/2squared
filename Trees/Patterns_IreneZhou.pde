@@ -152,7 +152,7 @@ class Fireflies extends TSTriggerablePattern {
     }
 
     for (Firefly firefly: fireflies) {
-      firefly.move(speed.getValuef());
+      firefly.move(speed.getValuef() * (float)deltaMs * 60 / 1000);
     }
   }
 
@@ -428,7 +428,7 @@ class Bubbles extends TSTriggerablePattern {
         }
       }
     
-      bubble.move(speed.getValuef());
+      bubble.move(speed.getValuef() * (float)deltaMs * 60 / 1000);
     }
   }
 
@@ -512,7 +512,7 @@ class Voronoi extends TSPattern {
       );
     }
     for (Site site: sites) {
-      site.move(speed.getValuef());
+      site.move(speed.getValuef() * (float)deltaMs * 60 / 1000);
     }
   }
 }
@@ -580,7 +580,7 @@ class Cells extends TSPattern {
       );
     }
     for (Site site: sites) {
-      site.move(speed.getValuef());
+      site.move(speed.getValuef() * (float)deltaMs * 60 / 1000);
     }
   }
 }
@@ -654,7 +654,7 @@ class Fumes extends TSPattern {
       );
     }
     for (Site site: sites) {
-      site.move(speed.getValuef());
+      site.move(speed.getValuef() * (float)deltaMs * 60 / 1000);
     }
   }
 }

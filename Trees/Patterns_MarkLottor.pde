@@ -156,8 +156,8 @@ class MarkLottor extends TSPattern {
     */
   }
 
-  Triggerable getTriggerable() {
-    return new ParameterTriggerableAdapter(getChannel().getFader()) {
+  void onTriggerableModeEnabled() {
+    parameterTriggerableAdapter = new ParameterTriggerableAdapter(getChannel().getFader()) {
       public void onTriggered(float strength) {
         if (!isFresh) {
           for (n = 0; n < BALLS; n++)

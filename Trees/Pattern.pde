@@ -1,13 +1,41 @@
 abstract class TSPattern extends LXPattern {
+  ParameterTriggerableAdapter parameterTriggerableAdapter;
+  String readableName;
+
   TSPattern(LX lx) {
     super(lx);
   }
 
   void onTriggerableModeEnabled() {
+    getChannel().getFader().setValue(0);
+    getChannelFade().setValue(0);
+    parameterTriggerableAdapter = new ParameterTriggerableAdapter(getChannelFade());
+    parameterTriggerableAdapter.addOutputTriggeredListener(new LXParameterListener() {
+      public void onParameterChanged(LXParameter parameter) {
+        setCallRun(parameter.getValue() != 0);
+      }
+    });
+    setCallRun(false);
   }
 
   Triggerable getTriggerable() {
-    return new ParameterTriggerableAdapter(getChannel().getFader());
+    return parameterTriggerableAdapter;
+  }
+
+  BasicParameter getChannelFade() {
+    return getFaderTransition(getChannel()).fade;
+  }
+
+  void setCallRun(boolean callRun) {
+    // getChannel().enabled.setValue(callRun);
+  }
+
+  boolean getEnabled() {
+    return getTriggerable().isTriggered();
+  }
+
+  double getVisibility() {
+    return getChannel().getFader().getValue();
   }
 }
 
@@ -58,6 +86,10 @@ abstract class TSTriggerablePattern extends TSPattern implements Triggerable {
       getChannel().enabled.setValue(false);
     }
     triggered = false;
+  }
+
+  public void addOutputTriggeredListener(LXParameterListener listener) {
+
   }
 }
 

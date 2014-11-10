@@ -19,12 +19,14 @@ import heronarts.p2lx.ui.control.*;
 
 import ddf.minim.*;
 import processing.opengl.*;
+import processing.net.*;
 
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -46,9 +48,8 @@ final static int REAR_RIGHT = 5;
 final static int REAR_LEFT = 6;
 final static int FRONT_LEFT = 7;
 
-final static int NUM_CHANNELS = 8;
-final static int NUM_KNOBS = 8;
 final static int NUM_AUTOMATION = 4;
+final static int NUM_CHANNELS = 3;
 
 /**
  * This defines the positions of the trees, which are
@@ -62,89 +63,73 @@ final static float[][] TREE_POSITIONS = {
 
 final static String CLUSTER_CONFIG_FILE = "data/clusters.json";
 
-LXPattern[] getPatternListForChannels() {
-  ArrayList<LXPattern> patterns = new ArrayList<LXPattern>();
-  // patterns.add(new OrderTest(lx));
+void registerPatternTriggerables() {
+  registerPattern("None", new NoPattern(lx));
+  registerPattern("Twister", new Twister(lx));
+  // registerPattern(new MarkLottor(lx));
+  registerPattern("Ripple", new Ripple(lx));
+  registerPattern("Stripes", new Stripes(lx));
+  registerPattern("Lattice", new Lattice(lx));
+  registerPattern("Fumes", new Fumes(lx));
+  registerPattern("Voronoi", new Voronoi(lx));
+  registerPattern("Candy Cloud", new CandyCloud(lx));
+  registerPattern("Galaxy Cloud", new GalaxyCloud(lx));
+
+  registerPattern("Color Strobe", new ColorStrobe(lx));
+  registerPattern("Strobe", new Strobe(lx));
+  registerPattern("Sparkle Takeover", new SparkleTakeOver(lx));
+  registerPattern("Multi-Sine", new MultiSine(lx));
+  registerPattern("Seesaw", new SeeSaw(lx));
+  registerPattern("Cells", new Cells(lx));
+  registerPattern("Fade", new Fade(lx));
   
-  // Add patterns here.
-  // The order here is the order it shows up in the patterns list
-//  patterns.add(new SolidColor(lx));
-  // patterns.add(new ClusterLineTest(lx));
-  patterns.add(new Twister(lx));
-  patterns.add(new CandyCloud(lx));
-  patterns.add(new MarkLottor(lx));
-  patterns.add(new SolidColor(lx));
-  // patterns.add(new DoubleHelix(lx));
-  patterns.add(new SparkleHelix(lx));
-  patterns.add(new Lightning(lx));
-  patterns.add(new SparkleTakeOver(lx));
-  patterns.add(new MultiSine(lx));
-  patterns.add(new Ripple(lx));
-  patterns.add(new SeeSaw(lx));
-  patterns.add(new SweepPattern(lx));
-  patterns.add(new IceCrystals(lx));
-  patterns.add(new ColoredLeaves(lx));
-  patterns.add(new Stripes(lx));
-  patterns.add(new AcidTrip(lx));
-  patterns.add(new Springs(lx));
-  patterns.add(new Lattice(lx));
-  patterns.add(new Fire(lx));
-  patterns.add(new Fireflies(lx));
-  patterns.add(new Fumes(lx));
-  patterns.add(new Voronoi(lx));
-  patterns.add(new Cells(lx));
-  patterns.add(new Bubbles(lx));
-  patterns.add(new Pulleys(lx));
+  // registerPattern(new IceCrystals(lx));
+  registerPattern("Fire", new Fire(lx));
 
-  patterns.add(new Wisps(lx));
-  patterns.add(new Explosions(lx));
-  patterns.add(new BassSlam(lx));
-  patterns.add(new Rain(lx));
-  patterns.add(new Fade(lx));
-  patterns.add(new Strobe(lx));
-  patterns.add(new Twinkle(lx));
-  patterns.add(new VerticalSweep(lx));
-  patterns.add(new RandomColor(lx));
-  patterns.add(new ColorStrobe(lx));
-  patterns.add(new Pixels(lx));
-  patterns.add(new Wedges(lx));
-  patterns.add(new Parallax(lx));
-  patterns.add(new LowEQ(lx));
-  patterns.add(new MidEQ(lx));
-  patterns.add(new HighEQ(lx));
-  patterns.add(new GalaxyCloud(lx));
-  patterns.add(new Verty(lx));
-  patterns.add(new Spinny(lx));
+  registerPattern("Acid Trip", new AcidTrip(lx));
+  registerPattern("Rain", new Rain(lx));
+  registerPattern("Bass Slam", new BassSlam(lx));
 
-  for (LXPattern pattern : patterns) {
-    LXTransition t = new DissolveTransition(lx).setDuration(dissolveTime);
-    pattern.setTransition(t);
-  }
+  registerPattern("Fireflies", new Fireflies(lx));
+  registerPattern("Bubbles", new Bubbles(lx));
+  // registerPattern(new Lightning(lx));
+  registerPattern("Wisps", new Wisps(lx));
+  registerPattern("Fireworks", new Explosions(lx));
 
-  return patterns.toArray(new LXPattern[patterns.size()]);
+  // registerPattern(new Explosions(lx, 20));
+  // registerPattern(new Wisps(lx, 1, 60, 50, 270, 20, 3.5, 10)); // downward yellow wisp
+  // registerPattern(new Wisps(lx, 30, 210, 100, 90, 20, 3.5, 10)); // colorful wisp storm
+  // registerPattern(new Wisps(lx, 1, 210, 100, 90, 130, 3.5, 10)); // multidirection colorful wisps
+  // registerPattern(new Wisps(lx, 3, 210, 10, 270, 0, 3.5, 10)); // rain storm of wisps
+  // registerPattern(new Wisps(lx, 35, 210, 180, 180, 15, 2, 15)); // twister of wisps
+  // registerPattern(new Fireflies(lx, 70, 6, 180));
+  // registerPattern(new Fireflies(lx, 40, 7.5, 90));
 }
 
-void registerEffects() {
-  BlurEffect blurEffect = new BlurEffect(lx);
+SpeedEffect speedEffect;
+SpinEffect spinEffect;
+BlurEffect blurEffect;
+StaticEffect staticEffect;
+
+void registerEffectTriggerables() {
   ColorEffect colorEffect = new ColorEffect(lx);
-  GhostEffect ghostEffect = new GhostEffect(lx);
-  ScrambleEffect scrambleEffect = new ScrambleEffect(lx);
-  StaticEffect staticEffect = new StaticEffect(lx);
-  RotationEffect rotationEffect = new RotationEffect(lx);
-  SpinEffect spinEffect = new SpinEffect(lx);
-  SpeedEffect speedEffect = new SpeedEffect(lx);
   ColorStrobeTextureEffect colorStrobeTextureEffect = new ColorStrobeTextureEffect(lx);
   FadeTextureEffect fadeTextureEffect = new FadeTextureEffect(lx);
   AcidTripTextureEffect acidTripTextureEffect = new AcidTripTextureEffect(lx);
   CandyTextureEffect candyTextureEffect = new CandyTextureEffect(lx);
   CandyCloudTextureEffect candyCloudTextureEffect = new CandyCloudTextureEffect(lx);
+  // GhostEffect ghostEffect = new GhostEffect(lx);
+  // ScrambleEffect scrambleEffect = new ScrambleEffect(lx);
+  // RotationEffect rotationEffect = new RotationEffect(lx);
+
+  speedEffect = new SpeedEffect(lx);
+  spinEffect = new SpinEffect(lx);
+  blurEffect = new BlurEffect(lx);
+  staticEffect = new StaticEffect(lx);
 
   lx.addEffect(blurEffect);
   lx.addEffect(colorEffect);
-  lx.addEffect(ghostEffect);
-  lx.addEffect(scrambleEffect);
   lx.addEffect(staticEffect);
-  lx.addEffect(rotationEffect);
   lx.addEffect(spinEffect);
   lx.addEffect(speedEffect);
   lx.addEffect(colorStrobeTextureEffect);
@@ -152,17 +137,26 @@ void registerEffects() {
   lx.addEffect(acidTripTextureEffect);
   lx.addEffect(candyTextureEffect);
   lx.addEffect(candyCloudTextureEffect);
+  // lx.addEffect(ghostEffect);
+  // lx.addEffect(scrambleEffect);
+  // lx.addEffect(rotationEffect);
 
-  effectKnobParameters = new LXListenableNormalizedParameter[] {
-    colorEffect.hueShift,
-    colorEffect.mono,
-    colorEffect.desaturation,
-    colorEffect.sharp,
-    blurEffect.amount,
-    speedEffect.speed,
-    spinEffect.spin,
-    candyCloudTextureEffect.amount
-  };
+  registerEffectControlParameter("Rainbow", candyCloudTextureEffect, candyCloudTextureEffect.amount);
+  registerEffectControlParameter("Candy Chaos", candyTextureEffect, candyTextureEffect.amount);
+  registerEffectControlParameter("Color Strobe", colorStrobeTextureEffect, colorStrobeTextureEffect.amount);
+  registerEffectControlParameter("Fade", fadeTextureEffect, fadeTextureEffect.amount);
+  registerEffectControlParameter("Monochrome", colorEffect, colorEffect.mono);
+  registerEffectControlParameter("White", colorEffect, colorEffect.desaturation);
+  // registerEffectControlParameter("Acid", acidTripTextureEffect, acidTripTextureEffect.amount);
+  // registerEffectControlParameter("Rainbow", colorEffect, colorEffect.rainbow);
+  // registerEffectControlParameter("Slow", speedEffect, speedEffect.speed, 1, 0.4);
+  // registerEffectControlParameter("Fast", speedEffect, speedEffect.speed, 1, 5);
+  // registerEffectControlParameter("Blur", blurEffect, blurEffect.amount, 0.65);
+  // registerEffectControlParameter("Spin", spinEffect, spinEffect.spin, 0.65);
+  // registerEffectControlParameter("Sharpen", colorEffect, colorEffect.sharp);
+  // registerEffectControlParameter("Ghost", ghostEffect, ghostEffect.amount, 0, 0.16);
+  // registerEffectControlParameter("Scramble", scrambleEffect, scrambleEffect.amount);
+  // registerEffectControlParameter("Static", staticEffect, staticEffect.amount, 0, .3);
 }
 
 static JSONArray clusterConfig;
@@ -171,23 +165,24 @@ static Geometry geometry = new Geometry();
 Model model;
 P2LX lx;
 FadecandyOutput output;
-UIChannelFaders uiFaders;
-UIMultiDeck uiDeck;
 final BasicParameter bgLevel = new BasicParameter("BG", 25, 0, 50);
 final BasicParameter dissolveTime = new BasicParameter("DSLV", 400, 50, 1000);
-final BasicParameter drumpadVelocity = new BasicParameter("DVEL", 1);
-BPMTool bpmTool;
 MappingTool mappingTool;
 LXAutomationRecorder[] automation = new LXAutomationRecorder[NUM_AUTOMATION];
 BooleanParameter[] automationStop = new BooleanParameter[NUM_AUTOMATION]; 
 DiscreteParameter automationSlot = new DiscreteParameter("AUTO", NUM_AUTOMATION);
-LXListenableNormalizedParameter[] effectKnobParameters;
-MidiEngine midiEngine;
 SpeedIndependentContainer speedIndependentContainer;
 
+boolean headless = false;
+boolean disableAutomation = true;
+boolean disableMainChannels = true;
+
 void setup() {
-  size(1148, 720, OPENGL);
-  frameRate(90); // this will get processing 2 to actually hit around 60
+  if (headless) {
+    noLoop();
+  } else {
+    size(1148, 720, OPENGL);
+  }
   
   clusterConfig = loadJSONArray(CLUSTER_CONFIG_FILE);
   geometry = new Geometry();
@@ -195,35 +190,28 @@ void setup() {
   
   lx = new P2LX(this, model);
   lx.engine.addLoopTask(speedIndependentContainer = new SpeedIndependentContainer(lx));
-  lx.engine.addParameter(drumpadVelocity);
 
-  configureChannels();
+  configureTriggerables();
 
-  registerEffects();
+  lx.engine.removeChannel(lx.engine.getDefaultChannel());
 
-  lx.addEffect(mappingTool = new MappingTool(lx));
+  if (!headless) {
+    lx.addEffect(mappingTool = new MappingTool(lx));
+  }
   lx.engine.addLoopTask(new ModelTransformTask());
 
-  configureBMPTool();
-
-  configureAutomation();
+  if (disableAutomation) {
+    configureAutomation();
+  }
 
   configureFadeCandyOutput();
 
-  configureUI();
+  if (!headless) {
+    configureUI();
+  }
 
-  configureMIDI();
+  configureRPC();
   
-  // bad code I know
-  // (shouldn't mess with engine internals)
-  // maybe need a way to specify a deck shouldn't be focused?
-  // essentially this lets us have extra decks for the drumpad
-  // patterns without letting them be assigned to channels
-  // -kf
-  lx.engine.focusedChannel.setRange(NUM_CHANNELS);
-  
-  // Engine threading
-  lx.engine.framesPerSecond.setValue(60);  
   lx.engine.setThreaded(true);
 }
 
@@ -240,24 +228,6 @@ void setupChannel(final LXChannel channel, boolean noOpWhenNotRunning) {
       }
     });
   }
-}
-
-void configureChannels() {
-  lx.setPatterns(getPatternListForChannels());
-  for (int i = 1; i < NUM_CHANNELS; ++i) {
-    lx.engine.addChannel(getPatternListForChannels());
-  }
-  
-  for (LXChannel channel : lx.engine.getChannels()) {
-    channel.goIndex(channel.getIndex());
-    setupChannel(channel, false);
-  }
-}
-
-/* configureBMPTool */
-
-void configureBMPTool() {
-  bpmTool = new BPMTool(lx, effectKnobParameters);
 }
 
 /* configureAutomation */
@@ -295,11 +265,52 @@ void configureAutomation() {
   }
 }
 
-/* configureMIDI */
+/* configureTriggerables */
 
-void configureMIDI() {
-  // MIDI control
-  midiEngine = new MidiEngine(effectKnobParameters);
+ArrayList<TSPattern> patterns;
+ArrayList<TSEffectController> effectControllers;
+int activeEffectControllerIndex = -1;
+
+void configureTriggerables() {
+  for (int i = 0; i < NUM_CHANNELS; i++) {
+    patterns = new ArrayList<TSPattern>();
+    registerPatternTriggerables();
+
+    LXChannel channel = lx.engine.addChannel(patterns.toArray(new TSPattern[0]));
+    if (i == 0) {
+      channel.goIndex(1);
+    }
+    channel.getFader().setValue(1);
+    setupChannel(channel, true);
+  }
+  patterns = null;
+
+  effectControllers = new ArrayList<TSEffectController>();
+  registerEffectTriggerables();
+}
+
+void registerPattern(String name, TSPattern pattern) {
+  LXTransition t = new DissolveTransition(lx).setDuration(dissolveTime);
+  pattern.setTransition(t);
+  pattern.readableName = name;
+  patterns.add(pattern);
+}
+
+/* configureEffects */
+
+void registerEffectControlParameter(String name, LXEffect effect, LXListenableNormalizedParameter parameter) {
+  registerEffectControlParameter(name, effect, parameter, 0, 1);
+}
+
+void registerEffectControlParameter(String name, LXEffect effect, LXListenableNormalizedParameter parameter, double onValue) {
+  registerEffectControlParameter(name, effect, parameter, 0, onValue);
+}
+
+void registerEffectControlParameter(String name, LXEffect effect, LXListenableNormalizedParameter parameter, double offValue, double onValue) {
+  ParameterTriggerableAdapter triggerable = new ParameterTriggerableAdapter(parameter, offValue, onValue);
+  TSEffectController effectController = new TSEffectController(name, effect, triggerable);
+
+  effectControllers.add(effectController);
 }
 
 /* configureUI */
@@ -324,11 +335,10 @@ void configureUI() {
     .addComponent(new UITrees())
   );
   lx.ui.addLayer(new UIMapping(lx.ui));
-  lx.ui.addLayer(uiFaders = new UIChannelFaders(lx.ui));
-  lx.ui.addLayer(new UIEffects(lx.ui, effectKnobParameters));
-  lx.ui.addLayer(uiDeck = new UIMultiDeck(lx.ui));
-  lx.ui.addLayer(new UILoopRecorder(lx.ui));
-  lx.ui.addLayer(new UIMasterBpm(lx.ui, Trees.this.width-144, 4, bpmTool));
+  lx.ui.addLayer(new UIChannelFaders(lx.ui));
+  if (!disableAutomation) {
+    lx.ui.addLayer(new UILoopRecorder(lx.ui));
+  }
 }
 
 /* configureFadeCandyOutput */
@@ -351,12 +361,38 @@ void configureFadeCandyOutput() {
   }
 }
 
+/* configureRPC */
+
+void configureRPC() {
+  new AppServer(lx).start();
+}
+
 void draw() {
   background(#222222);
 }
 
 TreesTransition getFaderTransition(LXChannel channel) {
-  return (TreesTransition) channel.getFaderTransition();
+  return (TreesTransition)channel.getFaderTransition();
+}
+
+static class Blender {
+  static void computeBlend(int[] output, int[] c1, int[] c2, double progress, LXColor.Blend blendType) {
+    if (progress == 0) {
+      for (int i = 0; i < output.length; ++i) {
+        output[i] = c1[i];
+      }
+    } else if (progress == 1) {
+      for (int i = 0; i < output.length; ++i) {
+        int color2 = (blendType == LXColor.Blend.SUBTRACT) ? LX.hsb(0, 0, LXColor.b(c2[i])) : c2[i]; 
+        output[i] = LXColor.blend(c1[i], color2, blendType);
+      }
+    } else {
+      for (int i = 0; i < output.length; ++i) {
+        int color2 = (blendType == LXColor.Blend.SUBTRACT) ? LX.hsb(0, 0, LXColor.b(c2[i])) : c2[i];
+        output[i] = LXColor.lerp(c1[i], LXColor.blend(c1[i], color2, blendType), progress);
+      }
+    }
+  }
 }
 
 class TreesTransition extends LXTransition {
@@ -364,8 +400,9 @@ class TreesTransition extends LXTransition {
   private final LXChannel channel;
   
   public final DiscreteParameter blendMode = new DiscreteParameter("MODE", 4);
- 
   private LXColor.Blend blendType = LXColor.Blend.ADD;
+
+  final BasicParameter fade = new BasicParameter("FADE", 1);
     
   TreesTransition(LX lx, LXChannel channel) {
     super(lx);
@@ -385,37 +422,13 @@ class TreesTransition extends LXTransition {
   }
   
   protected void computeBlend(int[] c1, int[] c2, double progress) {
-    if (progress == 0) {
-      for (int i = 0; i < colors.length; ++i) {
-        colors[i] = c1[i];
-      }
-    } else if (progress == 1) {
-      for (int i = 0; i < colors.length; ++i) {
-        int color2 = (blendType == LXColor.Blend.SUBTRACT) ? LX.hsb(0, 0, LXColor.b(c2[i])) : c2[i]; 
-        colors[i] = LXColor.blend(c1[i], color2, this.blendType);
-      }
-    } else {
-      for (int i = 0; i < colors.length; ++i) {
-        int color2 = (blendType == LXColor.Blend.SUBTRACT) ? LX.hsb(0, 0, LXColor.b(c2[i])) : c2[i];
-        colors[i] = LXColor.lerp(c1[i], LXColor.blend(c1[i], color2, this.blendType), progress);
-      }
-    }
+    Blender.computeBlend(colors, c1, c2, progress, blendType);
+    // LXColor.scaleBrightness(c2, fade.getValuef(), colors);
+    // Blender.computeBlend(colors, c1, colors, progress, blendType);
   }
 }
 
-class BooleanProxyParameter extends BooleanParameter {
-
-  final List<BooleanParameter> parameters = new ArrayList<BooleanParameter>();
-
-  BooleanProxyParameter() {
-    super("Proxy", true);
-  }
-
-  protected double updateValue(double value) {
-    for (BooleanParameter parameter : parameters) {
-      parameter.setValue(value);
-    }
-    return value;
-  }
+int focusedChannel() {
+  return lx.engine.focusedChannel.getValuei();
 }
 

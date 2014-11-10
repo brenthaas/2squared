@@ -620,6 +620,8 @@ class RandomColor extends TSPattern {
 }
 
 class ColorStrobe extends TSTriggerablePattern {
+
+  double timer = 0;
   
   ColorStrobe(LX lx) {
     super(lx);
@@ -627,7 +629,12 @@ class ColorStrobe extends TSTriggerablePattern {
   
   public void run(double deltaMs) {
     if (getChannel().getFader().getNormalized() == 0) return;
-    setColors(lx.hsb(random(360), 100, 100));
+
+    timer += deltaMs;
+    if (timer > 16) {
+      timer = 0;
+      setColors(lx.hsb(random(360), 100, 100));
+    }
   }
 }
 
@@ -1200,5 +1207,14 @@ class GalaxyCloud extends TSPattern {
 
       colors[cube.index] = lx.hsb(hue, 100, brightness);
     }
+  }
+}
+
+class NoPattern extends TSPattern {
+  NoPattern(LX lx) {
+    super(lx);
+  }
+
+  void run(double deltaMs) {
   }
 }

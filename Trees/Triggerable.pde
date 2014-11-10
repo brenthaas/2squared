@@ -1,35 +1,15 @@
-interface Drumpad {
-  public void padTriggered(int row, int col, float velocity);
-  public void padReleased(int row, int col);
-}
-
-class TSDrumpad implements Drumpad {
-  
-  Triggerable[][] triggerables = null;
-  
-  public void padTriggered(int row, int col, float velocity) {
-    if (triggerables != null && row < triggerables.length && col < triggerables[row].length) {
-      triggerables[row][col].onTriggered(velocity);
-    }
-  }
-  
-  public void padReleased(int row, int col) {
-    if (triggerables != null && row < triggerables.length && col < triggerables[row].length) {
-      triggerables[row][col].onRelease();
-    }
-  }
-}
-
 public interface Triggerable {
+  public boolean isTriggered();
   public void onTriggered(float strength);
   public void onRelease();
+  public void addOutputTriggeredListener(LXParameterListener listener);
 }
 
 public class ParameterTriggerableAdapter implements Triggerable, LXLoopTask {
 
-  private final BasicParameter triggeredEventParameter = new BasicParameter("ANON");
+  private final BooleanParameter triggeredEventParameter = new BooleanParameter("ANON");
   private final DampedParameter triggeredEventDampedParameter = new DampedParameter(triggeredEventParameter, 2);
-  private boolean isDampening = false;
+  private final BooleanParameter isDampening = new BooleanParameter("ANON");
   private double strength;
 
   private final LXNormalizedParameter enabledParameter;
@@ -49,30 +29,42 @@ public class ParameterTriggerableAdapter implements Triggerable, LXLoopTask {
     speedIndependentContainer.addLoopTask(triggeredEventDampedParameter.start());
   }
 
-  void loop(double deltaMs) {
-    if (isDampening) {
+  public void loop(double deltaMs) {
+    if (isDampening.isOn()) {
       enabledParameter.setValue((onValue - offValue) * strength * triggeredEventDampedParameter.getValue() + offValue);
       if (triggeredEventDampedParameter.getValue() == triggeredEventParameter.getValue()) {
-        isDampening = false;
+        isDampening.setValue(false);
       }
     } else {
       if (triggeredEventDampedParameter.getValue() != triggeredEventParameter.getValue()) {
         enabledParameter.setValue((onValue - offValue) * strength * triggeredEventDampedParameter.getValue() + offValue);
-        isDampening = true;
+        isDampening.setValue(true);
       }
     }
+  }
+
+  public boolean isTriggered() {
+    return triggeredEventParameter.isOn();
+  }
+
+  public void addOutputTriggeredListener(final LXParameterListener listener) {
+    isDampening.addListener(new LXParameterListener() {
+      public void onParameterChanged(LXParameter parameter) {
+        listener.onParameterChanged(triggeredEventDampedParameter);
+      }
+    });
   }
   
   public void onTriggered(float strength) {
     this.strength = strength;
     triggeredEventDampedParameter.setValue((enabledParameter.getValue() - offValue) / (onValue - offValue));
     // println((enabledParameter.getValue() - offValue) / (onValue - offValue));
-    triggeredEventParameter.setValue(1);
+    triggeredEventParameter.setValue(true);
   }
   
   public void onRelease() {
     triggeredEventDampedParameter.setValue((enabledParameter.getValue() - offValue) / (onValue - offValue));
-    triggeredEventParameter.setValue(0);
+    triggeredEventParameter.setValue(false);
   }
 }
 

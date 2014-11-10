@@ -475,8 +475,8 @@ class IceCrystals extends TSPattern {
     crystal.doStart(100, random(360), (7 + int(random(2.9))) % 8);
   }
 
-  Triggerable getTriggerable() {
-    return new ParameterTriggerableAdapter(getChannel().getFader()) {
+  void onTriggerableModeEnabled() {
+    parameterTriggerableAdapter = new ParameterTriggerableAdapter(getChannel().getFader()) {
       public void onTriggered(float strength) {
         startCrystal();
         super.onTriggered(strength);
